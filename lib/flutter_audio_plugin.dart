@@ -39,7 +39,6 @@ class AudioPlayer {
     this.cpuListener,
     this.debug = false}) {
     lib.init(deviceIndex, waveSampleRate);
-    volume = lib.getVolume();
     setCpuListener(cpuListener);
   }
 
@@ -81,6 +80,7 @@ class AudioPlayer {
     if (audioFile.existsSync()) {
       result = lib.loadFile(lib.translatePtr(fileLocation));
       this._setPlayerState(true, false, true, true);
+      setVolume(volume);
       if (debug) {
         print('load file: $result');
       }
@@ -114,9 +114,12 @@ class AudioPlayer {
       Timer.periodic(Duration(milliseconds: callbackRate), (timer) {
         double pos = getPosition();
         double dur = getDuration();
+
+        int posB = getPositionB();
+        int durB = getDurationB();
         if (_playerState[1]) {
           posListener(pos, dur);
-          if (_abs(dur - pos) <= 0.0001) {
+          if (posB >= durB) {
             timer.cancel();
             stop();
           }
@@ -181,6 +184,14 @@ class AudioPlayer {
     return 0;
   }
 
+  int getDurationB() {
+    return lib.getDurationB();
+  }
+
+  int getPositionB() {
+    return lib.getPositionB();
+  }
+
   bool setPosition(double seconds) {
     if (this._playerState[0]) {
       lib.setPosition(seconds);
@@ -210,7 +221,6 @@ class AudioPlayer {
       stateListener(_playerState[0], _playerState[1], _playerState[2], _playerState[3]);
     }
     if (posListener != null) {
-      print(getDuration());
       posListener(getPosition(), getDuration());
     }
   }

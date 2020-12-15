@@ -68,8 +68,14 @@ typedef ControlFunc = Int8 Function();
 typedef GetDuration = double Function();
 typedef GetDurationFunc = Double Function();
 
+typedef GetDurationB = int Function();
+typedef GetDurationBFunc = Uint64 Function();
+
 typedef SetPosition = void Function(double);
 typedef SetPositionFunc = Void Function(Double);
+
+typedef SetPositionB = void Function(int);
+typedef SetPositionBFunc = Void Function(Uint64);
 
 typedef GetVolume = int Function();
 typedef GetVolumeFunc = Int32 Function();
@@ -94,6 +100,9 @@ final Control stop = _lib.lookup<NativeFunction<ControlFunc>>('stop').asFunction
 final GetDuration getDuration = _lib.lookup<NativeFunction<GetDurationFunc>>('getDuration').asFunction();
 final GetDuration getPosition = _lib.lookup<NativeFunction<GetDurationFunc>>('getPosition').asFunction();
 final SetPosition setPosition = _lib.lookup<NativeFunction<SetPositionFunc>>('setPosition').asFunction();
+final GetDurationB getDurationB = _lib.lookup<NativeFunction<GetDurationBFunc>>('getDurationB').asFunction();
+final GetDurationB getPositionB = _lib.lookup<NativeFunction<GetDurationBFunc>>('getPositionB').asFunction();
+final SetPositionB setPositionB = _lib.lookup<NativeFunction<SetPositionBFunc>>('setPositionB').asFunction();
 final GetVolume getVolume = _lib.lookup<NativeFunction<GetVolumeFunc>>('getVolume').asFunction();
 final SetVolume setVolume = _lib.lookup<NativeFunction<SetVolumeFunc>>('setVolume').asFunction();
 final GetCpu getCpu = _lib.lookup<NativeFunction<GetCpuFunc>>('getCpu').asFunction();
