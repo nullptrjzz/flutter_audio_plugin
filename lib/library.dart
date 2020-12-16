@@ -33,10 +33,10 @@ class DeviceInfo extends Struct {
 
   Pointer driver;
 
-  @Int64()
+  @Uint64()
   int flags;
 
-  @Int32()
+  @Int8()
   int isDefault;
 
   factory DeviceInfo.allocate(Pointer name, Pointer driver, int flags, int isDefault) =>

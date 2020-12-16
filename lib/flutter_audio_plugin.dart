@@ -40,6 +40,9 @@ class AudioPlayer {
     this.debug = false}) {
     lib.init(deviceIndex, waveSampleRate);
     setCpuListener(cpuListener);
+
+    // 解决Hot Restart后音频没有停止播放的Bug
+    lib.freeStream();
   }
 
   dynamic getDevices() {
@@ -49,11 +52,15 @@ class AudioPlayer {
     devices = {};
     for (int i = 0; i < devCount; i++) {
       lib.DeviceInfo info = devList[i].ref;
-      devices[i] = {
+      devices[i + 1] = {
         'name': lib.translateStr(info.name),
         'driver': lib.translateStr(info.driver),
-        'isDefault': info.isDefault == 1
+        'flags': info.flags,
+        'isDefault': info.isDefault
       };
+      if (info.isDefault == 1) {
+        devices['default'] = devices[i + 1];
+      }
     }
 
     if (debug) {
@@ -153,7 +160,6 @@ class AudioPlayer {
   }
 
   bool stop() {
-    lib.freeStream();
     if (this._playerState[3]) {
       this._setPlayerState(false, false, false, true);
       return false;
@@ -226,6 +232,7 @@ class AudioPlayer {
   }
 
   void close() {
+    // 在native的close()实现中已经做了free stream的操作
     lib.close();
   }
 
