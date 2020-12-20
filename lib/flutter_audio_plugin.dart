@@ -1,7 +1,10 @@
 
 import 'dart:async';
+import 'dart:convert';
 import 'dart:ffi';
 import 'dart:io';
+
+import 'package:ffi/ffi.dart';
 
 import 'library.dart' as lib;
 
@@ -22,7 +25,7 @@ class AudioPlayer {
   int volume = 50;
   double waveAmplitude = 0.1;
   double waveFrequency = 440;
-  int waveSampleRate = 44800;
+  int waveSampleRate = 44100;
   int waveType = 0;
   List<bool> _playerState = [false, false, false, true];
   Map<dynamic, dynamic> devices = new Map<dynamic, dynamic>();
@@ -33,7 +36,7 @@ class AudioPlayer {
   int callbackRate = 20; // 20ms
 
   AudioPlayer({this.deviceIndex = -1,
-    this.waveSampleRate = 44800,
+    this.waveSampleRate = 44100,
     this.stateListener,
     this.posListener,
     this.cpuListener,
@@ -58,6 +61,7 @@ class AudioPlayer {
         'flags': info.flags,
         'isDefault': info.isDefault
       };
+      free(devList[i]);
       if (info.isDefault == 1) {
         devices['default'] = devices[i + 1];
       }
@@ -66,6 +70,7 @@ class AudioPlayer {
     if (debug) {
       print('Devices: $devices');
     }
+    free(devList);
     return devices;
   }
 
@@ -85,7 +90,10 @@ class AudioPlayer {
       lib.stop();
     }
     if (audioFile.existsSync()) {
-      result = lib.loadFile(lib.translatePtr(fileLocation));
+      Pointer ptr = lib.translatePtr(fileLocation);
+      result = lib.loadFile(ptr);
+      free(ptr);
+
       this._setPlayerState(true, false, true, true);
       setVolume(volume);
       if (debug) {
@@ -253,5 +261,69 @@ class AudioPlayer {
 
   void setPositionListener(PlayerDataListener listener) {
     this.posListener = listener;
+  }
+
+  Map audioTags(String fileLocation) {
+    Pointer ptr = lib.translatePtr(fileLocation);
+    Pointer res = lib.audioTags(ptr);
+    String str = Utf8.fromUtf8(res.cast<Utf8>());
+    free(ptr);
+    free(res);
+    if (str.isEmpty) {
+      return {};
+    } else {
+      return jsonDecode(str);
+    }
+  }
+
+  Map audioProperties(String fileLocation) {
+    Pointer ptr = lib.translatePtr(fileLocation);
+    Pointer res = lib.audioProperties(ptr);
+    String str = Utf8.fromUtf8(res.cast<Utf8>());
+    free(ptr);
+    free(res);
+    if (str.isEmpty) {
+      return {};
+    } else {
+      return jsonDecode(str);
+    }
+  }
+
+  /// 若[cacheDir]不为空，则返回一个JsonArray
+  /// {"count": 1, "list": [ { "type": 3, "file": "/cache/dir/img.jpg", "comment": "", "mime": "image/png" } ]}
+  /// 否则
+  /// [mode] 0    返回第一个封面图片的二进制
+  ///             return List<int>
+  ///        1    返回第一个封面图片的Base64
+  ///             return String
+  ///        其它  将图片Base64作为JSON item
+  ///             return List
+  dynamic audioArts(String fileLocation, String cacheDir, int mode) {
+    Pointer ptrLoc = lib.translatePtr(fileLocation);
+    if (cacheDir == null || cacheDir.isEmpty) {
+      Pointer empty = lib.translatePtr("");
+      Pointer res = lib.audioArts(ptrLoc, empty, mode);
+
+      dynamic result;
+      if (mode == 0) {
+        // no implementation
+      } else if (mode == 1) {
+        result = Utf8.fromUtf8(res.cast<Utf8>());
+      } else {
+        result = jsonDecode(Utf8.fromUtf8(res.cast<Utf8>()));
+      }
+      free(ptrLoc);
+      free(empty);
+      free(res);
+      return result;
+    } else {
+      Pointer ptrCache = lib.translatePtr(cacheDir);
+      Pointer res = lib.audioArts(ptrLoc, ptrCache, mode);
+      dynamic json = jsonDecode(Utf8.fromUtf8(res.cast<Utf8>()));
+      free(ptrLoc);
+      free(ptrCache);
+      free(res);
+      return json;
+    }
   }
 }

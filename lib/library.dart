@@ -1,24 +1,35 @@
 // Api of flyaudio.dll
-//	FLYAUDIO_API void init(int, int);
-// 	FLYAUDIO_API DEVICE_INFO* getDevices();
-// 	FLYAUDIO_API bool setDevice(int);
-// 	FLYAUDIO_API int loadFile(const char*);
+// /* Player control */
+// FLYAUDIO_API void init(int, int);
+// FLYAUDIO_API DEVICE_INFO** getDevices();
+// FLYAUDIO_API int getDeviceCount();
+// FLYAUDIO_API bool setDevice(int);
+// FLYAUDIO_API int loadFile(const char*);
 //
-// 	FLYAUDIO_API bool play();
-// 	FLYAUDIO_API bool pause();
-// 	FLYAUDIO_API bool stop();
+// FLYAUDIO_API bool play();
+// FLYAUDIO_API bool pause();
+// FLYAUDIO_API bool stop();
 //
-// 	FLYAUDIO_API double getDuration();
+// FLYAUDIO_API double getDuration();
 //
-// 	FLYAUDIO_API double getPosition();
-// 	FLYAUDIO_API void setPosition(double);
+// FLYAUDIO_API double getPosition();
+// FLYAUDIO_API void setPosition(double);
 //
-// 	FLYAUDIO_API int setVolume(int);
-// 	FLYAUDIO_API int getVolume();
+// FLYAUDIO_API unsigned long long getDurationB();
+// FLYAUDIO_API unsigned long long getPositionB();
+// FLYAUDIO_API void setPositionB(unsigned long long);
 //
-// 	FLYAUDIO_API float getCpu();
+// FLYAUDIO_API int setVolume(int);
+// FLYAUDIO_API int getVolume();
 //
-// 	FLYAUDIO_API void close();
+// FLYAUDIO_API float getCpu();
+//
+// FLYAUDIO_API void freeStream();
+// FLYAUDIO_API void close();
+//
+// FLYAUDIO_API const char* audioTags(const char* file);
+// FLYAUDIO_API const char* audioProperties(const char* file);
+// FLYAUDIO_API const char* audioArts(const char* file, const char* cacheDir, int bin);
 
 import 'dart:ffi';
 import 'dart:io';
@@ -89,6 +100,12 @@ typedef GetCpuFunc = Float Function();
 typedef Close = void Function();
 typedef CloseFunc = Void Function();
 
+typedef AudioTags = Pointer Function(Pointer);
+typedef AudioTagsFunc = Pointer Function(Pointer);
+
+typedef AudioArts = Pointer Function(Pointer, Pointer, int);
+typedef AudioArtsFunc = Pointer Function(Pointer, Pointer, Int32);
+
 final Init init = _lib.lookup<NativeFunction<InitFunc>>('init').asFunction();
 final GetDevices getDevices = _lib.lookup<NativeFunction<GetDevicesFunc>>('getDevices').asFunction();
 final GetDeviceCount getDeviceCount = _lib.lookup<NativeFunction<GetDeviceCountFunc>>('getDeviceCount').asFunction();
@@ -108,6 +125,11 @@ final SetVolume setVolume = _lib.lookup<NativeFunction<SetVolumeFunc>>('setVolum
 final GetCpu getCpu = _lib.lookup<NativeFunction<GetCpuFunc>>('getCpu').asFunction();
 final Close freeStream = _lib.lookup<NativeFunction<CloseFunc>>('freeStream').asFunction();
 final Close close = _lib.lookup<NativeFunction<CloseFunc>>('close').asFunction();
+
+/* 以下三个函数都是Utf8的返回值，无需进行ANSI转换*/
+final AudioTags audioTags = _lib.lookup<NativeFunction<AudioTagsFunc>>('audioTags').asFunction();
+final AudioTags audioProperties = _lib.lookup<NativeFunction<AudioTagsFunc>>('audioProperties').asFunction();
+final AudioArts audioArts = _lib.lookup<NativeFunction<AudioArtsFunc>>('audioArts').asFunction();
 
 Pointer translatePtr(String s) {
   return Platform.isWindows ? Gbk.toGbk(s)
@@ -143,9 +165,11 @@ class LibraryTest {
         'driver': translateStr(info.driver),
         'isDefault': info.isDefault == 1
       };
+      free(devList[i]);
     }
     print(devices);
 
+    free(devList);
     close();
   }
 

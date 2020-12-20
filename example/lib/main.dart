@@ -1,10 +1,6 @@
-import 'dart:convert';
 
 import 'package:flutter/material.dart';
 import 'dart:async';
-
-import 'package:flutter_audio_plugin/flutter_audio_plugin.dart';
-import 'package:flutter_audio_plugin/library.dart';
 
 void main() {
   runApp(MyApp());
@@ -23,11 +19,6 @@ class _MyAppState extends State<MyApp> {
     super.initState();
     initPlatformState();
 
-    AudioPlayer p = AudioPlayer();
-    p.getDevices();
-    print(p.load('D:/Music/双笙 - 小棋童.mp3'));
-    p.play();
-    Timer(Duration(seconds: 10), () {p.close();});
   }
 
   // Platform messages are asynchronous, so we initialize in an async method.
