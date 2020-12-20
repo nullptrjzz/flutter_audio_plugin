@@ -34,6 +34,7 @@ class AudioPlayer {
   PlayerDataListener posListener;
   PlayerStateListener stateListener;
   int callbackRate = 20; // 20ms
+  bool error = false;
 
   AudioPlayer({this.deviceIndex = -1,
     this.waveSampleRate = 44100,
@@ -82,7 +83,8 @@ class AudioPlayer {
 
   int load(String fileLocation) {
     File audioFile = File(fileLocation);
-    int result = 0;
+    int result = -1;
+    error = false;
     if (this._playerState[1]) {
       lib.pause();
     }
@@ -99,11 +101,13 @@ class AudioPlayer {
       if (debug) {
         print('load file: $result');
       }
+      error = result != 0;
       return result;
     } else {
       if (debug) {
         print('load file error: not exists');
       }
+      error = true;
       this._setPlayerState(false, false, false, true);
       return result;
     }
@@ -184,7 +188,7 @@ class AudioPlayer {
   }
 
   double getDuration() {
-    return lib.getDuration();
+    return error ? 0 : lib.getDuration();
   }
 
   double getPosition() {
@@ -263,67 +267,66 @@ class AudioPlayer {
     this.posListener = listener;
   }
 
-  Map audioTags(String fileLocation) {
-    Pointer ptr = lib.translatePtr(fileLocation);
-    Pointer res = lib.audioTags(ptr);
-    String str = Utf8.fromUtf8(res.cast<Utf8>());
-    free(ptr);
-    free(res);
-    if (str.isEmpty) {
-      return {};
-    } else {
-      return jsonDecode(str);
-    }
+}
+
+Map audioTags(String fileLocation) {
+  Pointer ptr = lib.translatePtr(fileLocation);
+  Pointer res = lib.audioTags(ptr);
+  String str = Utf8.fromUtf8(res.cast<Utf8>());
+  free(ptr);
+  free(res);
+  if (str.isEmpty) {
+    return {};
+  } else {
+    return jsonDecode(str);
   }
+}
 
-  Map audioProperties(String fileLocation) {
-    Pointer ptr = lib.translatePtr(fileLocation);
-    Pointer res = lib.audioProperties(ptr);
-    String str = Utf8.fromUtf8(res.cast<Utf8>());
-    free(ptr);
-    free(res);
-    if (str.isEmpty) {
-      return {};
-    } else {
-      return jsonDecode(str);
-    }
+Map audioProperties(String fileLocation) {
+  Pointer ptr = lib.translatePtr(fileLocation);
+  Pointer res = lib.audioProperties(ptr);
+  String str = Utf8.fromUtf8(res.cast<Utf8>());
+  free(ptr);
+  free(res);
+  if (str.isEmpty) {
+    return {};
+  } else {
+    return jsonDecode(str);
   }
+}
 
-  /// 若[cacheDir]不为空，则返回一个JsonArray
-  /// {"count": 1, "list": [ { "type": 3, "file": "/cache/dir/img.jpg", "comment": "", "mime": "image/png" } ]}
-  /// 否则
-  /// [mode] 0    返回第一个封面图片的二进制
-  ///             return List<int>
-  ///        1    返回第一个封面图片的Base64
-  ///             return String
-  ///        其它  将图片Base64作为JSON item
-  ///             return List
-  dynamic audioArts(String fileLocation, String cacheDir, int mode) {
-    Pointer ptrLoc = lib.translatePtr(fileLocation);
-    if (cacheDir == null || cacheDir.isEmpty) {
-      Pointer empty = lib.translatePtr("");
-      Pointer res = lib.audioArts(ptrLoc, empty, mode);
+/// 若[cacheDir]不为空，则返回一个JsonArray
+/// {"count": 1, "list": [ { "type": 3, "file": "/cache/dir/img.jpg", "comment": "", "mime": "image/png" } ]}
+/// 否则
+/// [mode] 0    返回第一个封面图片的二进制
+///             return List<int>
+///        1    返回第一个封面图片的Base64
+///             return String
+///        其它  将图片Base64作为JSON item
+///             return List
+dynamic audioArts(String fileLocation, String cacheDir, int mode) {
+  Pointer ptrLoc = lib.translatePtr(fileLocation);
+  if (cacheDir == null || cacheDir.isEmpty) {
+    Pointer empty = lib.translatePtr("");
+    Pointer res = lib.audioArts(ptrLoc, empty, mode);
 
-      dynamic result;
-      if (mode == 0) {
-        // no implementation
-      } else if (mode == 1) {
-        result = Utf8.fromUtf8(res.cast<Utf8>());
-      } else {
-        result = jsonDecode(Utf8.fromUtf8(res.cast<Utf8>()));
-      }
-      free(ptrLoc);
-      free(empty);
-      free(res);
-      return result;
+    dynamic result;
+    if (mode == 0) {
+      // no implementation
+    } else if (mode == 1) {
+      result = Utf8.fromUtf8(res.cast<Utf8>());
     } else {
-      Pointer ptrCache = lib.translatePtr(cacheDir);
-      Pointer res = lib.audioArts(ptrLoc, ptrCache, mode);
-      dynamic json = jsonDecode(Utf8.fromUtf8(res.cast<Utf8>()));
-      free(ptrLoc);
-      free(ptrCache);
-      free(res);
-      return json;
+      result = jsonDecode(Utf8.fromUtf8(res.cast<Utf8>()));
     }
+    free(ptrLoc);
+    free(empty);
+    return result;
+  } else {
+    Pointer ptrCache = lib.translatePtr(cacheDir);
+    Pointer res = lib.audioArts(ptrLoc, ptrCache, mode);
+    dynamic json = jsonDecode(Utf8.fromUtf8(res.cast<Utf8>()));
+    free(ptrLoc);
+    free(ptrCache);
+    return json;
   }
 }
