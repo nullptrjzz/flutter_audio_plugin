@@ -11,6 +11,7 @@ import 'library.dart' as lib;
 typedef PlayerCpuListener = Function(double cpu);
 typedef PlayerDataListener = Function(double pos, double dur);
 typedef PlayerStateListener = Function(bool isLoaded, bool isPlaying, bool isPaused, bool isStopped);
+typedef PlayerFinishListener = Function();
 
 /// Modified from <pre>flutter_audio_desktop</pre> using dart ffi,
 /// and better adaption for ANSI code.
@@ -32,6 +33,7 @@ class AudioPlayer {
 
   PlayerCpuListener cpuListener;
   PlayerDataListener posListener;
+  PlayerFinishListener finishListener;
   PlayerStateListener stateListener;
   int callbackRate = 20; // 20ms
   bool error = false;
@@ -41,6 +43,7 @@ class AudioPlayer {
     this.stateListener,
     this.posListener,
     this.cpuListener,
+    this.finishListener,
     this.debug = false}) {
     lib.init(deviceIndex, waveSampleRate);
     setCpuListener(cpuListener);
@@ -139,8 +142,8 @@ class AudioPlayer {
         if (_playerState[1]) {
           posListener(pos, dur);
           if (posB >= durB) {
+            if (finishListener != null) finishListener();
             timer.cancel();
-            stop();
           }
         } else {
           timer.cancel();
@@ -265,6 +268,10 @@ class AudioPlayer {
 
   void setPositionListener(PlayerDataListener listener) {
     this.posListener = listener;
+  }
+
+  void setFinishListener(PlayerFinishListener listener) {
+    this.finishListener = listener;
   }
 
 }
