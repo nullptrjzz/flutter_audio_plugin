@@ -37,7 +37,8 @@ import 'dart:io';
 import 'package:ffi/ffi.dart';
 import 'package:flutter_audio_plugin/ext/gbk.dart';
 
-final _lib = DynamicLibrary.open('flyaudio.dll');
+final _lib = Platform.isWindows ? DynamicLibrary.open('flyaudio.dll')
+    : DynamicLibrary.open('libflyaudio.so');
 
 class DeviceInfo extends Struct {
   Pointer name;
