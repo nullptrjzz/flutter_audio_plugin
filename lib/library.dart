@@ -58,6 +58,24 @@ class DeviceInfo extends Struct {
       ..isDefault = isDefault;
 }
 
+class AudioMeta extends Struct {
+  @Int32()
+  int sampleRate;
+  @Int32()
+  int channels;
+  @Int32()
+  int length;
+  @Int32()
+  int bitRate;
+
+  factory AudioMeta.allocate(int sampleRate, int channels, int length, int bitRate) =>
+      allocate<AudioMeta>().ref
+      ..sampleRate = sampleRate
+      ..channels = channels
+      ..length = length
+      ..bitRate = bitRate;
+}
+
 typedef Init = void Function(int, int);
 typedef InitFunc = Void Function(Int32, Int32);
 
@@ -106,6 +124,9 @@ typedef AudioTagsFunc = Pointer Function(Pointer);
 typedef AudioArts = Pointer Function(Pointer, Pointer, int);
 typedef AudioArtsFunc = Pointer Function(Pointer, Pointer, Int32);
 
+typedef AudioMetaF = Pointer<AudioMeta> Function(Pointer);
+typedef AudioMetaFunc = Pointer<AudioMeta> Function(Pointer);
+
 final Init init = _lib.lookup<NativeFunction<InitFunc>>('init').asFunction();
 final GetDevices getDevices = _lib.lookup<NativeFunction<GetDevicesFunc>>('getDevices').asFunction();
 final GetDeviceCount getDeviceCount = _lib.lookup<NativeFunction<GetDeviceCountFunc>>('getDeviceCount').asFunction();
@@ -130,6 +151,7 @@ final Close close = _lib.lookup<NativeFunction<CloseFunc>>('close').asFunction()
 final AudioTags audioTags = _lib.lookup<NativeFunction<AudioTagsFunc>>('audioTags').asFunction();
 final AudioTags audioProperties = _lib.lookup<NativeFunction<AudioTagsFunc>>('audioProperties').asFunction();
 final AudioArts audioArts = _lib.lookup<NativeFunction<AudioArtsFunc>>('audioArts').asFunction();
+final AudioMetaF audioMeta = _lib.lookup<NativeFunction<AudioMetaFunc>>('audioMeta').asFunction();
 
 Pointer translatePtr(String s) {
   return Platform.isWindows ? Gbk.toGbk(s)

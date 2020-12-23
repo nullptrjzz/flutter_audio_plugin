@@ -13,6 +13,22 @@ typedef PlayerDataListener = Function(double pos, double dur);
 typedef PlayerStateListener = Function(bool isLoaded, bool isPlaying, bool isPaused, bool isStopped);
 typedef PlayerFinishListener = Function();
 
+class AudioMeta {
+  int sampleRate;
+  int channels;
+  int length;
+  int bitRate;
+
+  AudioMeta(this.sampleRate, this.channels, this.length, this.bitRate);
+
+  AudioMeta.empty() {
+    sampleRate = 0;
+    channels = 0;
+    length = 0;
+    bitRate = 0;
+  }
+}
+
 /// Modified from <pre>flutter_audio_desktop</pre> using dart ffi,
 /// and better adaption for ANSI code.
 class AudioPlayer {
@@ -143,7 +159,7 @@ class AudioPlayer {
           posListener(pos, dur);
           if (posB >= durB) {
             if (finishListener != null) finishListener();
-            timer.cancel();
+            //timer.cancel();
           }
         } else {
           timer.cancel();
@@ -215,7 +231,18 @@ class AudioPlayer {
 
   bool setPosition(double seconds) {
     if (this._playerState[0]) {
+      print('set to $seconds s');
       lib.setPosition(seconds);
+      print('pos: ${getPosition()} (${getPositionB()})');
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  bool setPositionB(int bytes) {
+    if (this._playerState[0]) {
+      lib.setPositionB(bytes);
       return true;
     } else {
       return false;
@@ -281,7 +308,6 @@ Map audioTags(String fileLocation) {
   Pointer res = lib.audioTags(ptr);
   String str = Utf8.fromUtf8(res.cast<Utf8>());
   free(ptr);
-  free(res);
   if (str.isEmpty) {
     return {};
   } else {
@@ -294,7 +320,6 @@ Map audioProperties(String fileLocation) {
   Pointer res = lib.audioProperties(ptr);
   String str = Utf8.fromUtf8(res.cast<Utf8>());
   free(ptr);
-  free(res);
   if (str.isEmpty) {
     return {};
   } else {
@@ -336,4 +361,15 @@ dynamic audioArts(String fileLocation, String cacheDir, int mode) {
     free(ptrCache);
     return json;
   }
+}
+
+AudioMeta audioMeta(String fileLocation) {
+  Pointer ptr = lib.translatePtr(fileLocation);
+  Pointer<lib.AudioMeta> res = lib.audioMeta(ptr);
+  lib.AudioMeta meta = res.ref;
+  AudioMeta ret =
+    AudioMeta(meta.sampleRate, meta.channels, meta.length, meta.bitRate);
+  free(ptr);
+  free(res);
+  return ret;
 }
