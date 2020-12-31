@@ -5,6 +5,7 @@ import 'dart:ffi';
 import 'dart:io';
 
 import 'package:ffi/ffi.dart';
+import 'package:isolate/isolate.dart';
 
 import 'library.dart' as lib;
 
@@ -12,6 +13,7 @@ typedef PlayerCpuListener = Function(double cpu);
 typedef PlayerDataListener = Function(double pos, double dur);
 typedef PlayerStateListener = Function(bool isLoaded, bool isPlaying, bool isPaused, bool isStopped);
 typedef PlayerFinishListener = Function();
+typedef RpcListener = Function(String id, String action);
 
 class AudioMeta {
   int sampleRate;
@@ -51,8 +53,11 @@ class AudioPlayer {
   PlayerDataListener posListener;
   PlayerFinishListener finishListener;
   PlayerStateListener stateListener;
+  RpcListener rpcListener;
   int callbackRate = 20; // 20ms
   bool error = false;
+
+  RawDatagramSocket socket;
 
   AudioPlayer({this.deviceIndex = -1,
     this.waveSampleRate = 44100,
@@ -60,12 +65,52 @@ class AudioPlayer {
     this.posListener,
     this.cpuListener,
     this.finishListener,
+    this.rpcListener,
     this.debug = false}) {
     lib.init(deviceIndex, waveSampleRate);
+    initRpcServer();
     setCpuListener(cpuListener);
-
     // 解决Hot Restart后音频没有停止播放的Bug
     lib.freeStream();
+  }
+
+  static void backgroundSetRpcPort(int port) {
+    lib.setRpcPort(port);
+  }
+
+  /// 开启监听键盘钩子发送的TCP数据
+  void initRpcServer() {
+    InternetAddress address = InternetAddress.loopbackIPv4;
+    RawDatagramSocket.bind(address, 0).then((sock) async {
+      socket = sock;
+      socket.broadcastEnabled = true;
+
+      LoadBalancer pool = await LoadBalancer.create(1, IsolateRunner.spawn);
+      pool.run(backgroundSetRpcPort, socket.port);
+
+      if (debug) {
+        print('Open udp port [${socket.port}], listen key board event');
+      }
+
+      await for (var event in socket) {
+        if (RawSocketEvent.read == event) {
+          var data = socket.receive();
+          String result = String.fromCharCodes(data.data);
+          print(result);
+          if (result.contains(' ')) {
+            String id = result.substring(0, result.indexOf(' '));
+            String action = result.substring(result.indexOf(' ') + 1);
+            if (rpcListener != null) {
+              rpcListener(id, action);
+            }
+          }
+        }
+      }
+    });
+  }
+
+  void stopRpcServer() {
+    socket.close();
   }
 
   dynamic getDevices() {
@@ -231,9 +276,7 @@ class AudioPlayer {
 
   bool setPosition(double seconds) {
     if (this._playerState[0]) {
-      print('set to $seconds s');
       lib.setPosition(seconds);
-      print('pos: ${getPosition()} (${getPositionB()})');
       return true;
     } else {
       return false;
@@ -274,6 +317,7 @@ class AudioPlayer {
   }
 
   void close() {
+    stopRpcServer();
     // 在native的close()实现中已经做了free stream的操作
     lib.close();
   }
@@ -295,6 +339,10 @@ class AudioPlayer {
 
   void setPositionListener(PlayerDataListener listener) {
     this.posListener = listener;
+  }
+
+  void setRpcListener(RpcListener rpcListener) {
+    this.rpcListener = rpcListener;
   }
 
   void setFinishListener(PlayerFinishListener listener) {
