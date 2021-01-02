@@ -6,9 +6,9 @@
 // FLYAUDIO_API bool setDevice(int);
 // FLYAUDIO_API int loadFile(const char*);
 //
-// FLYAUDIO_API bool play();
-// FLYAUDIO_API bool pause();
-// FLYAUDIO_API bool stop();
+// FLYAUDIO_API bool fa_play();
+// FLYAUDIO_API bool fa_pause();
+// FLYAUDIO_API bool fa_stop();
 //
 // FLYAUDIO_API double getDuration();
 //
@@ -25,7 +25,7 @@
 // FLYAUDIO_API float getCpu();
 //
 // FLYAUDIO_API void freeStream();
-// FLYAUDIO_API void close();
+// FLYAUDIO_API void fa_close();
 //
 // FLYAUDIO_API const char* audioTags(const char* file);
 // FLYAUDIO_API const char* audioProperties(const char* file);
@@ -133,9 +133,9 @@ final GetDevices getDevices = _lib.lookup<NativeFunction<GetDevicesFunc>>('getDe
 final GetDeviceCount getDeviceCount = _lib.lookup<NativeFunction<GetDeviceCountFunc>>('getDeviceCount').asFunction();
 final SetDevice setDevice = _lib.lookup<NativeFunction<SetDeviceFunc>>('setDevice').asFunction();
 final LoadFile loadFile = _lib.lookup<NativeFunction<LoadFileFunc>>('loadFile').asFunction();
-final Control play = _lib.lookup<NativeFunction<ControlFunc>>('play').asFunction();
-final Control pause = _lib.lookup<NativeFunction<ControlFunc>>('pause').asFunction();
-final Control stop = _lib.lookup<NativeFunction<ControlFunc>>('stop').asFunction();
+final Control play = _lib.lookup<NativeFunction<ControlFunc>>('fa_play').asFunction();
+final Control pause = _lib.lookup<NativeFunction<ControlFunc>>('fa_pause').asFunction();
+final Control stop = _lib.lookup<NativeFunction<ControlFunc>>('fa_stop').asFunction();
 final GetDuration getDuration = _lib.lookup<NativeFunction<GetDurationFunc>>('getDuration').asFunction();
 final GetDuration getPosition = _lib.lookup<NativeFunction<GetDurationFunc>>('getPosition').asFunction();
 final SetPosition setPosition = _lib.lookup<NativeFunction<SetPositionFunc>>('setPosition').asFunction();
@@ -146,7 +146,7 @@ final GetVolume getVolume = _lib.lookup<NativeFunction<GetVolumeFunc>>('getVolum
 final SetVolume setVolume = _lib.lookup<NativeFunction<SetVolumeFunc>>('setVolume').asFunction();
 final GetCpu getCpu = _lib.lookup<NativeFunction<GetCpuFunc>>('getCpu').asFunction();
 final Close freeStream = _lib.lookup<NativeFunction<CloseFunc>>('freeStream').asFunction();
-final Close close = _lib.lookup<NativeFunction<CloseFunc>>('close').asFunction();
+final Close close = _lib.lookup<NativeFunction<CloseFunc>>('fa_close').asFunction();
 
 /* 以下三个函数都是Utf8的返回值，无需进行ANSI转换*/
 final AudioTags audioTags = _lib.lookup<NativeFunction<AudioTagsFunc>>('audioTags').asFunction();
