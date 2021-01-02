@@ -128,6 +128,9 @@ typedef AudioArtsFunc = Pointer Function(Pointer, Pointer, Int32);
 typedef AudioMetaF = Pointer<AudioMeta> Function(Pointer);
 typedef AudioMetaFunc = Pointer<AudioMeta> Function(Pointer);
 
+typedef SetRpcPort = void Function(int);
+typedef SetRpcPortFunc = Void Function(Int32);
+
 final Init init = _lib.lookup<NativeFunction<InitFunc>>('init').asFunction();
 final GetDevices getDevices = _lib.lookup<NativeFunction<GetDevicesFunc>>('getDevices').asFunction();
 final GetDeviceCount getDeviceCount = _lib.lookup<NativeFunction<GetDeviceCountFunc>>('getDeviceCount').asFunction();
@@ -147,6 +150,7 @@ final SetVolume setVolume = _lib.lookup<NativeFunction<SetVolumeFunc>>('setVolum
 final GetCpu getCpu = _lib.lookup<NativeFunction<GetCpuFunc>>('getCpu').asFunction();
 final Close freeStream = _lib.lookup<NativeFunction<CloseFunc>>('freeStream').asFunction();
 final Close close = _lib.lookup<NativeFunction<CloseFunc>>('fa_close').asFunction();
+final SetRpcPort setRpcPort = _lib.lookup<NativeFunction<SetRpcPortFunc>>('setRpcPort').asFunction();
 
 /* 以下三个函数都是Utf8的返回值，无需进行ANSI转换*/
 final AudioTags audioTags = _lib.lookup<NativeFunction<AudioTagsFunc>>('audioTags').asFunction();
