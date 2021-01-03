@@ -56,6 +56,7 @@ class AudioPlayer {
   RpcListener rpcListener;
   int callbackRate = 20; // 20ms
   bool error = false;
+  bool rpcBind = false;
 
   RawDatagramSocket socket;
 
@@ -68,7 +69,9 @@ class AudioPlayer {
     this.rpcListener,
     this.debug = false}) {
     lib.init(deviceIndex, waveSampleRate);
-    initRpcServer();
+    if (rpcListener != null) {
+      initRpcServer();
+    }
     setCpuListener(cpuListener);
     // 解决Hot Restart后音频没有停止播放的Bug
     lib.freeStream();
@@ -80,6 +83,8 @@ class AudioPlayer {
 
   /// 开启监听键盘钩子发送的TCP数据
   void initRpcServer() {
+    if (rpcBind || rpcListener == null) return;
+    rpcBind = true;
     InternetAddress address = InternetAddress.loopbackIPv4;
     RawDatagramSocket.bind(address, 0).then((sock) async {
       socket = sock;
@@ -96,7 +101,7 @@ class AudioPlayer {
         if (RawSocketEvent.read == event) {
           var data = socket.receive();
           String result = String.fromCharCodes(data.data);
-          print(result);
+
           if (result.contains(' ')) {
             String id = result.substring(0, result.indexOf(' '));
             String action = result.substring(result.indexOf(' ') + 1);
@@ -343,6 +348,7 @@ class AudioPlayer {
 
   void setRpcListener(RpcListener rpcListener) {
     this.rpcListener = rpcListener;
+    initRpcServer();
   }
 
   void setFinishListener(PlayerFinishListener listener) {
